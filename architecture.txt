@@ -1,0 +1,53 @@
+dropship-platform/
+├── app/
+│   ├── __init__.py
+│   ├── models/
+│   │   ├── __init__.py
+│   │   ├── user.py
+│   │   ├── product.py
+│   │   └── order.py
+│   ├── routes/
+│   │   ├── __init__.py
+│   │   ├── auth.py
+│   │   ├── admin.py
+│   │   ├── products.py
+│   │   └── orders.py
+│   ├── static/
+│   │   ├── css/
+│   │   │   ├── style.css
+│   │   │   ├── light-theme.css
+│   │   │   └── dark-theme.css
+│   │   ├── js/
+│   │   │   ├── main.js
+│   │   │   └── theme-switcher.js
+│   │   └── img/
+│   │       ├── logo.svg
+│   │       ├── day-mode.svg
+│   │       └── night-mode.svg
+│   ├── templates/
+│   │   ├── base.html
+│   │   ├── auth/
+│   │   │   ├── login.html
+│   │   │   └── register.html
+│   │   ├── products/
+│   │   │   ├── list.html
+│   │   │   └── detail.html
+│   │   └── admin/
+│   │       ├── dashboard.html
+│   │       └── products.html
+│   └── utils/
+│       ├── __init__.py
+│       ├── scrapers.py
+│       └── helpers.py
+├── migrations/
+├── tests/
+│   ├── __init__.py
+│   ├── test_models.py
+│   └── test_routes.py
+├── .env
+├── .gitignore
+├── config.py
+├── docker-compose.yml
+├── Dockerfile
+├── requirements.txt
+└── run.py
