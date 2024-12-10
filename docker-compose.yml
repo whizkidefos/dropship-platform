@@ -2,7 +2,8 @@ services:
   web:
     build: .
     command: >
-      sh -c "python -m flask db upgrade &&
+      sh -c "sleep 10 &&
+             python -m flask db upgrade &&
              python -m flask run --host=0.0.0.0"
     volumes:
       - .:/app
@@ -30,12 +31,13 @@ services:
       - POSTGRES_PASSWORD=postgres
       - POSTGRES_DB=dropship
     ports:
-      - "5432:5432"
+      - "5434:5432"
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U postgres"]
-      interval: 5s
+      test: ["CMD-SHELL", "pg_isready -U postgres -d dropship"]
+      interval: 10s
       timeout: 5s
-      retries: 5
+      retries: 10
+      start_period: 30s
     networks:
       - dropship-network
 
@@ -45,9 +47,10 @@ services:
       - "6379:6379"
     healthcheck:
       test: ["CMD", "redis-cli", "ping"]
-      interval: 5s
+      interval: 10s
       timeout: 5s
-      retries: 5
+      retries: 10
+      start_period: 30s
     networks:
       - dropship-network
 

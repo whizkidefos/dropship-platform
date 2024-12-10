@@ -1,12 +1,9 @@
-from celery import Celery
 from flask import current_app
+from celery import Celery
 
-def make_celery(app):
-    celery = Celery(
-        app.import_name,
-        backend=app.config['CELERY_RESULT_BACKEND'],
-        broker=app.config['CELERY_BROKER_URL']
-    )
+celery = Celery('app')
+
+def init_celery(app):
     celery.conf.update(app.config)
 
     class ContextTask(celery.Task):
@@ -17,7 +14,6 @@ def make_celery(app):
     celery.Task = ContextTask
     return celery
 
-# Example task
 @celery.task
 def test_task():
     return "Celery is working!"

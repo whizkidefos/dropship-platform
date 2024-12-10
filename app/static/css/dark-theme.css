@@ -17,58 +17,45 @@ body {
     color: var(--text-primary);
 }
 
+/* Navigation */
 .navbar {
     background-color: var(--bg-primary) !important;
     border-bottom: 1px solid var(--border-color);
 }
 
+.navbar-light .navbar-brand,
 .navbar-light .navbar-nav .nav-link {
-    color: var(--text-primary);
+    color: var(--text-primary) !important;
 }
 
+/* Cards */
 .card {
     background-color: var(--bg-secondary);
     border: 1px solid var(--border-color);
 }
 
-.card-header {
-    background-color: var(--bg-primary);
-    border-bottom: 1px solid var(--border-color);
-}
-
-.list-group-item {
-    background-color: var(--bg-secondary);
+.card-body {
     color: var(--text-primary);
-    border-color: var(--border-color);
 }
 
-.list-group-item.active {
-    background-color: var(--primary-color);
-    border-color: var(--primary-color);
+.card-title {
+    color: var(--text-primary);
 }
 
-.footer {
+.card-text {
+    color: var(--text-secondary);
+}
+
+/* Stats Section */
+.bg-light {
     background-color: var(--bg-secondary) !important;
-    border-top: 1px solid var(--border-color);
 }
 
 .text-muted {
     color: var(--text-secondary) !important;
 }
 
-.dropdown-menu {
-    background-color: var(--bg-secondary);
-    border-color: var(--border-color);
-}
-
-.dropdown-item {
-    color: var(--text-primary);
-}
-
-.dropdown-item:hover {
-    background-color: var(--bg-primary);
-}
-
+/* Forms */
 .form-control {
     background-color: var(--bg-primary);
     border-color: var(--border-color);
@@ -80,16 +67,24 @@ body {
     color: var(--text-primary);
 }
 
-.btn-outline-primary {
-    color: var(--primary-color);
-    border-color: var(--primary-color);
+/* Buttons */
+.btn-outline-secondary {
+    color: var(--text-secondary);
+    border-color: var(--text-secondary);
 }
 
-.table {
-    color: var(--text-primary);
+.btn-outline-secondary:hover {
+    background-color: var(--text-secondary);
+    color: var(--bg-primary);
 }
 
-.modal-content {
-    background-color: var(--bg-secondary);
-    color: var(--text-primary);
+/* Feature Icons */
+.feature-icon {
+    background-color: rgba(13, 110, 253, 0.2) !important;
+}
+
+/* Stats Background */
+.stats-section, 
+.bg-light.rounded-3 {
+    background-color: var(--bg-secondary) !important;
 }

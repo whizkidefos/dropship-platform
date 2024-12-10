@@ -1,0 +1,135 @@
+{% extends "admin/base.html" %}
+
+{% block admin_content %}
+<div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
+    <h1 class="h2">{{ 'Edit' if product else 'Create' }} Product</h1>
+    <div class="btn-toolbar mb-2 mb-md-0">
+        <a href="{{ url_for('admin.products') }}" class="btn btn-secondary">
+            <i class="fas fa-arrow-left me-2"></i>Back to Products
+        </a>
+    </div>
+</div>
+
+<div class="card border-0 shadow-sm">
+    <div class="card-body">
+        <form method="POST" id="productForm">
+            <div class="row g-3">
+                <div class="col-md-6">
+                    <label for="sku" class="form-label">SKU *</label>
+                    <input type="text" class="form-control" id="sku" name="sku" required
+                           value="{{ product.sku if product else '' }}">
+                </div>
+                
+                <div class="col-md-6">
+                    <label for="title" class="form-label">Title *</label>
+                    <input type="text" class="form-control" id="title" name="title" required
+                           value="{{ product.title if product else '' }}">
+                </div>
+
+                <div class="col-12">
+                    <label for="description" class="form-label">Description *</label>
+                    <textarea class="form-control" id="description" name="description" rows="4" required>{{ product.description if product else '' }}</textarea>
+                </div>
+
+                <div class="col-md-4">
+                    <label for="cost" class="form-label">Cost Price *</label>
+                    <div class="input-group">
+                        <span class="input-group-text">$</span>
+                        <input type="number" class="form-control" id="cost" name="cost" step="0.01" required
+                               value="{{ "%.2f"|format(product.cost) if product else '' }}">
+                    </div>
+                </div>
+
+                <div class="col-md-4">
+                    <label for="markup_percentage" class="form-label">Markup Percentage *</label>
+                    <div class="input-group">
+                        <input type="number" class="form-control" id="markup_percentage" name="markup_percentage" 
+                               step="0.1" required value="{{ product.markup_percentage if product else '20' }}">
+                        <span class="input-group-text">%</span>
+                    </div>
+                </div>
+
+                <div class="col-md-4">
+                    <label for="calculated_price" class="form-label">Selling Price</label>
+                    <div class="input-group">
+                        <span class="input-group-text">$</span>
+                        <input type="text" class="form-control" id="calculated_price" readonly
+                               value="{{ "%.2f"|format(product.price) if product else '' }}">
+                    </div>
+                </div>
+
+                <div class="col-md-4">
+                    <label for="category" class="form-label">Category *</label>
+                    <input type="text" class="form-control" id="category" name="category" required
+                           value="{{ product.category if product else '' }}" list="categoryList">
+                    <datalist id="categoryList">
+                        {% for category in categories %}
+                        <option value="{{ category }}">
+                        {% endfor %}
+                    </datalist>
+                </div>
+
+                <div class="col-md-4">
+                    <label for="stock_level" class="form-label">Stock Level *</label>
+                    <input type="number" class="form-control" id="stock_level" name="stock_level" required
+                           value="{{ product.stock_level if product else '0' }}">
+                </div>
+
+                <div class="col-md-4">
+                    <label for="vendor_name" class="form-label">Vendor Name *</label>
+                    <input type="text" class="form-control" id="vendor_name" name="vendor_name" required
+                           value="{{ product.vendor_name if product else '' }}">
+                </div>
+
+                <div class="col-12">
+                    <label for="vendor_url" class="form-label">Vendor URL *</label>
+                    <input type="url" class="form-control" id="vendor_url" name="vendor_url" required
+                           value="{{ product.vendor_url if product else '' }}">
+                </div>
+
+                <div class="col-12">
+                    <label for="image_urls" class="form-label">Image URLs (one per line)</label>
+                    <textarea class="form-control" id="image_urls" name="image_urls" rows="3">{{ '\n'.join(image.url for image in product.images) if product and product.images else '' }}</textarea>
+                </div>
+
+                {% if product %}
+                <div class="col-12">
+                    <div class="form-check">
+                        <input class="form-check-input" type="checkbox" id="is_active" name="is_active"
+                               {% if product.is_active %}checked{% endif %}>
+                        <label class="form-check-label" for="is_active">
+                            Active Product
+                        </label>
+                    </div>
+                </div>
+                {% endif %}
+
+                <div class="col-12">
+                    <hr>
+                    <button type="submit" class="btn btn-primary">
+                        <i class="fas fa-save me-2"></i>{{ 'Update' if product else 'Create' }} Product
+                    </button>
+                </div>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+{{ super() }}
+<script>
+$(document).ready(function() {
+    // Calculate selling price based on cost and markup
+    function calculatePrice() {
+        const cost = parseFloat($('#cost').val()) || 0;
+        const markup = parseFloat($('#markup_percentage').val()) || 0;
+        const price = cost * (1 + markup / 100);
+        $('#calculated_price').val(price.toFixed(2));
+    }
+
+    $('#cost, #markup_percentage').on('input', calculatePrice);
+    calculatePrice();  // Initial calculation
+});
+</script>
+{% endblock %}

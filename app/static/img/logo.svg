@@ -1,0 +1,9 @@
+<svg viewBox="0 0 200 50" xmlns="http://www.w3.org/2000/svg">
+    <!-- Cart Icon -->
+    <path d="M20 15 L35 15 L32 30 L23 30 Z" stroke="currentColor" fill="none" stroke-width="2"/>
+    <circle cx="25" cy="35" r="3" fill="currentColor"/>
+    <circle cx="30" cy="35" r="3" fill="currentColor"/>
+    
+    <!-- Text -->
+    <text x="45" y="30" font-family="Arial" font-size="20" fill="currentColor">Dropship</text>
+</svg>
