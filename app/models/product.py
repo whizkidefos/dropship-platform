@@ -14,9 +14,10 @@ class Product(db.Model):
     vendor_name = db.Column(db.String(100))
     category = db.Column(db.String(100))
     is_active = db.Column(db.Boolean, default=True)
-    images = db.relationship('ProductImage', backref='product', lazy=True)
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
     updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+    # Relationships
+    images = db.relationship('ProductImage', backref='product', lazy=True, cascade='all, delete-orphan')
 
     def calculate_profit_margin(self):
         """Calculate profit margin percentage"""
@@ -36,3 +37,6 @@ class ProductImage(db.Model):
     url = db.Column(db.String(500), nullable=False)
     is_primary = db.Column(db.Boolean, default=False)
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    
+    def __repr__(self):
+        return f'<ProductImage {self.id} for Product {self.product_id}>'

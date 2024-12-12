@@ -57,10 +57,15 @@
 							<a class="nav-link" href="{{ url_for('home') }}">Home</a>
 						</li>
 						<li class="nav-item">
-							<a class="nav-link" href="{{ url_for('products.catalog') }}"
-								>Products</a
-							>
+							<a class="nav-link {% if request.endpoint == 'products.catalog' %}active{% endif %}" 
+							   href="{{ url_for('products.catalog') }}">Shop</a>
 						</li>
+						{% if current_user.is_admin %}
+						<li class="nav-item">
+							<a class="nav-link {% if 'admin.' in request.endpoint %}active{% endif %}" 
+							href="{{ url_for('admin.admin_dashboard') }}">Admin</a>
+						</li>
+						{% endif %}
 					</ul>
 
 					<div class="d-flex align-items-center">
@@ -70,47 +75,24 @@
 						</button>
 
 						{% if current_user.is_authenticated %}
-						<div class="dropdown">
-							<button
-								class="btn btn-link dropdown-toggle"
-								type="button"
-								data-bs-toggle="dropdown"
-							>
-								{{ current_user.username }}
-							</button>
-							<ul class="dropdown-menu dropdown-menu-end">
-								{% if current_user.is_admin %}
-								<li>
-									<a
-										class="dropdown-item"
-										href="{{ url_for('admin.dashboard') }}"
-										>Admin Dashboard</a
-									>
-								</li>
-								{% endif %}
-								<li>
-									<a class="dropdown-item" href="{{ url_for('auth.profile') }}"
-										>Profile</a
-									>
-								</li>
-								<li><hr class="dropdown-divider" /></li>
-								<li>
-									<a class="dropdown-item" href="{{ url_for('auth.logout') }}"
-										>Logout</a
-									>
-								</li>
-							</ul>
-						</div>
-						{% else %}
-						<a
-							href="{{ url_for('auth.login') }}"
-							class="btn btn-outline-primary me-2"
-							>Login</a
-						>
-						<a href="{{ url_for('auth.register') }}" class="btn btn-primary"
-							>Register</a
-						>
-						{% endif %}
+                        <div class="dropdown">
+                            <button class="btn btn-link dropdown-toggle" type="button" data-bs-toggle="dropdown">
+                                <i class="fas fa-user me-2"></i>{{ current_user.username }}
+                            </button>
+                            <ul class="dropdown-menu dropdown-menu-end">
+                                {% if current_user.is_admin %}
+                                    <li><a class="dropdown-item" href="{{ url_for('admin.admin_dashboard') }}">Admin Dashboard</a></li>
+                                    <li><hr class="dropdown-divider"></li>
+                                {% endif %}
+                                <li><a class="dropdown-item" href="{{ url_for('auth.profile') }}">Profile</a></li>
+                                <li><hr class="dropdown-divider"></li>
+                                <li><a class="dropdown-item" href="{{ url_for('auth.logout') }}">Logout</a></li>
+                            </ul>
+                        </div>
+                    {% else %}
+                        <a href="{{ url_for('auth.login') }}" class="btn btn-outline-primary me-2">Login</a>
+                        <a href="{{ url_for('auth.register') }}" class="btn btn-primary">Register</a>
+                    {% endif %}
 					</div>
 				</div>
 			</div>
