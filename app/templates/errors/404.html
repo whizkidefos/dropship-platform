@@ -1,0 +1,30 @@
+{% extends "base.html" %}
+
+{% block title %}404 Not Found{% endblock %}
+
+{% block content %}
+<div class="container min-vh-100 d-flex align-items-center justify-content-center">
+    <div class="text-center">
+        <h1 class="display-1 fw-bold">404</h1>
+        <h2 class="fs-3 mb-3">Page Not Found</h2>
+        <p class="lead mb-4">The page you are looking for might have been removed, had its name changed, or is temporarily unavailable.</p>
+        <div class="d-flex justify-content-center gap-3">
+            <a href="javascript:history.back()" class="btn btn-outline-primary">
+                <i class="fas fa-arrow-left me-2"></i>Go Back
+            </a>
+            <a href="{{ url_for('home') }}" class="btn btn-primary">
+                <i class="fas fa-home me-2"></i>Go Home
+            </a>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+{{ super() }}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Optional: Add any animations or interactions here
+});
+</script>
+{% endblock %}

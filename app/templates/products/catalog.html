@@ -1,0 +1,222 @@
+{% extends "base.html" %}
+
+{% block title %}Product Catalog{% endblock %}
+
+{% block content %}
+<div class="container py-5">
+    <div class="row">
+        <!-- Filter Sidebar -->
+        <div class="col-lg-3">
+            <div class="card shadow-sm">
+                <div class="card-body">
+                    <h5 class="card-title mb-4">Filters</h5>
+                    <form id="filterForm" method="GET" action="{{ url_for('products.catalog') }}">
+                        <!-- Search -->
+                        <div class="mb-4">
+                            <label class="form-label">Search</label>
+                            <input type="text" name="search" class="form-control" 
+                                   value="{{ search or '' }}" placeholder="Search products...">
+                        </div>
+
+                        <!-- Categories -->
+                        <div class="mb-4">
+                            <label class="form-label">Category</label>
+                            <select name="category" class="form-select">
+                                <option value="">All Categories</option>
+                                {% for category in categories %}
+                                <option value="{{ category }}" {% if current_category == category %}selected{% endif %}>
+                                    {{ category }}
+                                </option>
+                                {% endfor %}
+                            </select>
+                        </div>
+
+                        <!-- Price Range -->
+                        <div class="mb-4">
+                            <label class="form-label">Price Range</label>
+                            <div class="row g-2">
+                                <div class="col">
+                                    <input type="number" name="min_price" class="form-control" 
+                                           placeholder="Min" value="{{ min_price or '' }}" step="0.01">
+                                </div>
+                                <div class="col">
+                                    <input type="number" name="max_price" class="form-control" 
+                                           placeholder="Max" value="{{ max_price or '' }}" step="0.01">
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Sort -->
+                        <div class="mb-4">
+                            <label class="form-label">Sort By</label>
+                            <select name="sort" class="form-select">
+                                <option value="newest" {% if current_sort == 'newest' %}selected{% endif %}>
+                                    Newest First
+                                </option>
+                                <option value="price_low" {% if current_sort == 'price_low' %}selected{% endif %}>
+                                    Price: Low to High
+                                </option>
+                                <option value="price_high" {% if current_sort == 'price_high' %}selected{% endif %}>
+                                    Price: High to Low
+                                </option>
+                            </select>
+                        </div>
+
+                        <button type="submit" class="btn btn-primary w-100">Apply Filters</button>
+                        <a href="{{ url_for('products.catalog') }}" class="btn btn-outline-secondary w-100 mt-2">
+                            Clear Filters
+                        </a>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+        <!-- Product Grid -->
+        <div class="col-lg-9">
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <h4 class="mb-0">Products</h4>
+                <small class="text-muted">{{ products.total }} products found</small>
+            </div>
+
+            {% if products.items %}
+            <div class="row row-cols-1 row-cols-md-3 g-4">
+                {% for product in products.items %}
+                <div class="col">
+                    <div class="card h-100 shadow-sm product-card">
+                        <!-- Product Image -->
+                        <img src="{{ product.images[0].url if product.images else url_for('static', filename='img/no-image.png') }}"
+                             class="card-img-top" alt="{{ product.title }}"
+                             style="height: 200px; object-fit: cover;">
+                        
+                        <!-- Quick View Button -->
+                        <button class="btn btn-sm btn-primary quick-view-btn"
+                                data-product-id="{{ product.id }}"
+                                style="position: absolute; top: 10px; right: 10px;">
+                            <i class="fas fa-eye"></i>
+                        </button>
+
+                        <div class="card-body">
+                            <h5 class="card-title">{{ product.title }}</h5>
+                            <p class="card-text text-muted">{{ product.description[:100] }}...</p>
+                            
+                            <div class="d-flex justify-content-between align-items-center mt-3">
+                                <span class="h5 mb-0">${{ "%.2f"|format(product.price) }}</span>
+                                <a href="{{ url_for('products.detail', id=product.id) }}" 
+                                   class="btn btn-outline-primary">View Details</a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+
+            <!-- Pagination -->
+            {% if products.pages > 1 %}
+            <nav class="mt-4">
+                <ul class="pagination justify-content-center">
+                    {% if products.has_prev %}
+                    <li class="page-item">
+                        <a class="page-link" href="{{ url_for('products.catalog', page=products.prev_num, **request.args) }}">
+                            Previous
+                        </a>
+                    </li>
+                    {% endif %}
+
+                    {% for page_num in products.iter_pages(left_edge=2, left_current=2, right_current=3, right_edge=2) %}
+                        {% if page_num %}
+                            <li class="page-item {% if page_num == products.page %}active{% endif %}">
+                                <a class="page-link" href="{{ url_for('products.catalog', page=page_num, **request.args) }}">
+                                    {{ page_num }}
+                                </a>
+                            </li>
+                        {% else %}
+                            <li class="page-item disabled"><span class="page-link">...</span></li>
+                        {% endif %}
+                    {% endfor %}
+
+                    {% if products.has_next %}
+                    <li class="page-item">
+                        <a class="page-link" href="{{ url_for('products.catalog', page=products.next_num, **request.args) }}">
+                            Next
+                        </a>
+                    </li>
+                    {% endif %}
+                </ul>
+            </nav>
+            {% endif %}
+
+            {% else %}
+            <div class="text-center py-5">
+                <h3>No products found</h3>
+                <p class="text-muted">Try adjusting your filters or search terms</p>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+<!-- Quick View Modal -->
+<div class="modal fade" id="quickViewModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Product Quick View</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <!-- Content will be loaded dynamically -->
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                <a href="#" class="btn btn-primary" id="viewDetailBtn">View Details</a>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+{{ super() }}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Quick View functionality
+    const modal = new bootstrap.Modal(document.getElementById('quickViewModal'));
+    
+    document.querySelectorAll('.quick-view-btn').forEach(button => {
+        button.addEventListener('click', function(e) {
+            e.preventDefault();
+            const productId = this.dataset.productId;
+            
+            // Load product data
+            fetch(`/products/api/quick-view/${productId}`)
+                .then(response => response.json())
+                .then(data => {
+                    const modalBody = document.querySelector('#quickViewModal .modal-body');
+                    const viewDetailBtn = document.getElementById('viewDetailBtn');
+                    
+                    modalBody.innerHTML = `
+                        <div class="row">
+                            <div class="col-md-6">
+                                <img src="${data.main_image || '/static/img/no-image.png'}" 
+                                     class="img-fluid" alt="${data.title}">
+                            </div>
+                            <div class="col-md-6">
+                                <h4>${data.title}</h4>
+                                <h5 class="text-primary mb-3">$${data.price.toFixed(2)}</h5>
+                                <p>${data.description}</p>
+                                <p class="mb-0">
+                                    <strong>Availability:</strong>
+                                    ${data.stock_level > 0 ? 'In Stock' : 'Out of Stock'}
+                                </p>
+                            </div>
+                        </div>
+                    `;
+                    
+                    viewDetailBtn.href = data.detail_url;
+                    modal.show();
+                });
+        });
+    });
+});
+</script>
+{% endblock %}

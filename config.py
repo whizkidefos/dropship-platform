@@ -1,5 +1,6 @@
 import os
 from dotenv import load_dotenv
+from datetime import timedelta
 
 load_dotenv()
 
@@ -11,6 +12,22 @@ class Config:
     SQLALCHEMY_DATABASE_URI = os.environ.get('DATABASE_URL') or \
         'sqlite:///dropship.db'
     SQLALCHEMY_TRACK_MODIFICATIONS = False
+    
+    # Debug Toolbar
+    DEBUG_TB_ENABLED = os.getenv('FLASK_ENV') == 'development'
+    DEBUG_TB_INTERCEPT_REDIRECTS = False
+    
+    # Development specific
+    if os.getenv('FLASK_ENV') == 'development':
+        EXPLAIN_TEMPLATE_LOADING = True
+        TEMPLATES_AUTO_RELOAD = True
+        SEND_FILE_MAX_AGE_DEFAULT = 0
+    
+    
+    # Session configuration
+    PERMANENT_SESSION_LIFETIME = timedelta(days=30)
+    SESSION_COOKIE_SECURE = os.getenv('FLASK_ENV') != 'development'
+    
     
     # Upload
     UPLOAD_FOLDER = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'app/static/uploads')

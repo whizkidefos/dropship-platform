@@ -1,7 +1,8 @@
-from flask import Blueprint, render_template, redirect, url_for, flash, request, send_file
+from flask import Blueprint, Response, render_template, redirect, url_for, flash, request, send_file
 from flask_login import login_required, current_user
 from app.models.product import Product, ProductImage
 from app.models.user import User
+from app.models.order import Order, OrderLog
 from app import db
 from datetime import datetime
 from sqlalchemy import desc
@@ -10,21 +11,23 @@ import csv
 import io
 import pandas as pd
 from datetime import datetime
+from functools import wraps
 
-admin = Blueprint('admin', __name__)
+admin = Blueprint('admin', __name__, url_prefix='/admin')
 
 def admin_required(f):
+    @wraps(f)
     @login_required
     def decorated_function(*args, **kwargs):
         if not current_user.is_admin:
-            flash('Access denied. Admin privileges required.', 'danger')
-            return redirect(url_for('home'))
+            flash('You need to be an administrator to access this page.', 'danger')
+            return redirect(url_for('auth.login'))
         return f(*args, **kwargs)
     return decorated_function
 
-@admin.route('/admin/dashboard')
+@admin.route('/dashboard')
 @admin_required
-def dashboard():
+def admin_dashboard():
     # Get summary statistics
     total_products = Product.query.count()
     active_products = Product.query.filter_by(is_active=True).count()
@@ -39,9 +42,9 @@ def dashboard():
                          total_users=total_users,
                          recent_products=recent_products)
 
-@admin.route('/admin/products')
+@admin.route('/products')
 @admin_required
-def products():
+def admin_product():
     page = request.args.get('page', 1, type=int)
     query = Product.query.order_by(desc(Product.created_at))
     
@@ -61,9 +64,9 @@ def products():
                          categories=categories)
     
 
-@admin.route('/admin/products/create', methods=['GET', 'POST'])
+@admin.route('/products/create', methods=['GET', 'POST'])
 @admin_required
-def create_product():
+def admin_product_create():
     if request.method == 'POST':
         try:
             product = Product(
@@ -100,9 +103,10 @@ def create_product():
     
     return render_template('admin/products/create.html')
 
-@admin.route('/admin/products/<int:id>/edit', methods=['GET', 'POST'])
+
+@admin.route('/products/<int:id>/edit', methods=['GET', 'POST'])
 @admin_required
-def edit_product(id):
+def admin_product_edit(id):
     product = Product.query.get_or_404(id)
     
     if request.method == 'POST':
@@ -134,7 +138,7 @@ def edit_product(id):
             
             db.session.commit()
             flash('Product updated successfully!', 'success')
-            return redirect(url_for('admin.products'))
+            return redirect(url_for('admin.product_list'))
             
         except Exception as e:
             db.session.rollback()
@@ -142,9 +146,10 @@ def edit_product(id):
     
     return render_template('admin/products/edit.html', product=product)
 
-@admin.route('/admin/products/<int:id>/delete', methods=['POST'])
+
+@admin.route('/products/<int:id>/delete', methods=['POST'])
 @admin_required
-def delete_product(id):
+def admin_product_delete(id):
     product = Product.query.get_or_404(id)
     try:
         db.session.delete(product)
@@ -154,12 +159,81 @@ def delete_product(id):
         db.session.rollback()
         flash(f'Error deleting product: {str(e)}', 'danger')
     
-    return redirect(url_for('admin.products'))
+    return redirect(url_for('admin.product_list'))
 
 
-@admin.route('/admin/products/export')
+@admin.route('/orders')
 @admin_required
-def export_products():
+def admin_orders():  # Changed from orders to avoid duplicate
+    page = request.args.get('page', 1, type=int)
+    status = request.args.get('status')
+    search = request.args.get('search')
+    
+    query = Order.query
+    
+    if status:
+        query = query.filter_by(status=status)
+    
+    if search:
+        query = query.join(User).filter(
+            db.or_(
+                Order.order_number.ilike(f'%{search}%'),
+                User.email.ilike(f'%{search}%')
+            )
+        )
+    
+    orders = query.order_by(Order.created_at.desc()).paginate(page=page, per_page=20)
+    
+    return render_template('admin/orders/index.html', orders=orders)
+
+
+@admin.route('/orders/<int:id>')
+@admin_required
+def admin_order_detail(id):  # Changed from order_detail
+    order = Order.query.get_or_404(id)
+    return render_template('admin/orders/detail.html', order=order)
+
+
+@admin.route('/orders/<int:id>/update-status', methods=['POST'])
+@admin_required
+def admin_update_order_status(id):  # Fixed missing id parameter and renamed
+    order = Order.query.get_or_404(id)
+    new_status = request.form.get('status')
+    notes = request.form.get('notes')
+    
+    if new_status and new_status != order.status:
+        order.status = new_status
+        
+        # Create log entry
+        log = OrderLog(
+            order_id=order.id,
+            status=new_status,
+            notes=notes
+        )
+        db.session.add(log)
+        
+        # Update tracking number if provided
+        tracking_number = request.form.get('tracking_number')
+        if tracking_number:
+            order.tracking_number = tracking_number
+        
+        db.session.commit()
+        flash('Order status updated successfully!', 'success')
+    
+    return redirect(url_for('admin.admin_order_detail', id=id))
+
+
+# User routes
+@admin.route('/users')
+@admin_required
+def admin_users():  # Changed from users
+    return render_template('admin/users/index.html')
+
+
+# Export/Import routes - renamed for consistency
+@admin.route('/products/export')
+@admin_required
+def admin_export_products():
     format_type = request.args.get('format', 'csv')
     
     # Get all products with their images
@@ -213,9 +287,10 @@ def export_products():
             download_name='products_export.xlsx'
         )
 
-@admin.route('/admin/products/import', methods=['POST'])
+
+@admin.route('/products/import', methods=['POST'])
 @admin_required
-def import_products():
+def admin_import_products():
     if 'file' not in request.files:
         flash('No file uploaded', 'danger')
         return redirect(url_for('admin.products'))
@@ -298,4 +373,58 @@ def import_products():
     except Exception as e:
         flash(f'Error processing file: {str(e)}', 'danger')
     
-    return redirect(url_for('admin.products'))
+    return redirect(url_for('admin.product_list'))
+    order = Order.query.get_or_404(id)
+    return render_template('admin/orders/detail.html', order=order)
+
+
+
+@admin.route('/orders/export')
+@admin_required
+def admin_export_orders():
+    format_type = request.args.get('format', 'csv')
+    status = request.args.get('status')
+    
+    query = Order.query
+    if status:
+        query = query.filter_by(status=status)
+    
+    orders = query.all()
+    
+    data = []
+    for order in orders:
+        data.append({
+            'order_number': order.order_number,
+            'customer_email': order.user.email,
+            'status': order.status,
+            'total_amount': order.total_amount,
+            'items_count': len(order.items),
+            'tracking_number': order.tracking_number,
+            'created_at': order.created_at,
+            'updated_at': order.updated_at
+        })
+    
+    if format_type == 'csv':
+        output = io.StringIO()
+        writer = csv.DictWriter(output, fieldnames=data[0].keys())
+        writer.writeheader()
+        writer.writerows(data)
+        
+        return Response(
+            output.getvalue(),
+            mimetype='text/csv',
+            headers={'Content-Disposition': 'attachment; filename=orders_export.csv'}
+        )
+    
+    elif format_type == 'excel':
+        output = io.BytesIO()
+        df = pd.DataFrame(data)
+        df.to_excel(output, index=False, sheet_name='Orders')
+        output.seek(0)
+        
+        return send_file(
+            output,
+            mimetype='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+            as_attachment=True,
+            download_name='orders_export.xlsx'
+        )

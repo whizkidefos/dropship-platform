@@ -6,8 +6,8 @@ WORKDIR /app
 # Set environment variables
 ENV PYTHONDONTWRITEBYTECODE 1
 ENV PYTHONUNBUFFERED 1
-ENV FLASK_APP run.py
-ENV FLASK_ENV development
+ENV FLASK_APP=run.py
+ENV FLASK_ENV=development
 
 # Install system dependencies
 RUN apt-get update \
@@ -25,6 +25,9 @@ RUN pip install --upgrade pip \
 
 # Copy project
 COPY . .
+
+# Create required directories if they don't exist
+RUN mkdir -p app/static/img
 
 # Run the application
 CMD ["flask", "run", "--host=0.0.0.0"]

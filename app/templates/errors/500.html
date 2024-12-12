@@ -1,0 +1,36 @@
+{% extends "base.html" %}
+
+{% block title %}500 Server Error{% endblock %}
+
+{% block content %}
+<div class="container min-vh-100 d-flex align-items-center justify-content-center">
+    <div class="text-center">
+        <h1 class="display-1 fw-bold">500</h1>
+        <h2 class="fs-3 mb-3">Internal Server Error</h2>
+        <p class="lead mb-4">Something went wrong on our end. Our team has been notified and we're working to fix it.</p>
+        <div class="d-flex justify-content-center gap-3">
+            <a href="javascript:history.back()" class="btn btn-outline-primary">
+                <i class="fas fa-arrow-left me-2"></i>Go Back
+            </a>
+            <a href="{{ url_for('home') }}" class="btn btn-primary">
+                <i class="fas fa-home me-2"></i>Go Home
+            </a>
+        </div>
+        {% if config['DEBUG'] %}
+        <div class="mt-4 p-3 bg-light rounded text-start">
+            <h6 class="text-muted">Error Details (Debug Mode):</h6>
+            <pre class="mb-0"><code>{{ error }}</code></pre>
+        </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+{{ super() }}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Optional: Add any animations or interactions here
+});
+</script>
+{% endblock %}

@@ -2,8 +2,7 @@ services:
   web:
     build: .
     command: >
-      sh -c "sleep 10 &&
-             python -m flask db upgrade &&
+      sh -c "python -m flask db upgrade &&
              python -m flask run --host=0.0.0.0"
     volumes:
       - .:/app
@@ -14,6 +13,8 @@ services:
       - FLASK_ENV=development
       - DATABASE_URL=postgresql://postgres:postgres@db:5432/dropship
       - REDIS_URL=redis://redis:6379/0
+      - CELERY_BROKER_URL=redis://redis:6379/0
+      - CELERY_RESULT_BACKEND=redis://redis:6379/0
     depends_on:
       db:
         condition: service_healthy
@@ -33,11 +34,10 @@ services:
     ports:
       - "5434:5432"
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U postgres -d dropship"]
-      interval: 10s
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 5s
       timeout: 5s
-      retries: 10
-      start_period: 30s
+      retries: 5
     networks:
       - dropship-network
 
@@ -47,10 +47,9 @@ services:
       - "6379:6379"
     healthcheck:
       test: ["CMD", "redis-cli", "ping"]
-      interval: 10s
+      interval: 5s
       timeout: 5s
-      retries: 10
-      start_period: 30s
+      retries: 5
     networks:
       - dropship-network
 
@@ -62,6 +61,8 @@ services:
     environment:
       - DATABASE_URL=postgresql://postgres:postgres@db:5432/dropship
       - REDIS_URL=redis://redis:6379/0
+      - CELERY_BROKER_URL=redis://redis:6379/0
+      - CELERY_RESULT_BACKEND=redis://redis:6379/0
     depends_on:
       db:
         condition: service_healthy
