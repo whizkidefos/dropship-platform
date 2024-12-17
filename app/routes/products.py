@@ -79,13 +79,16 @@ def detail(id):
 @products.route('/api/quick-view/<int:id>')
 def quick_view(id):
     """API endpoint for quick view modal"""
-    product = Product.query.get_or_404(id)
-    return jsonify({
-        'id': product.id,
-        'title': product.title,
-        'price': float(product.price),
-        'description': product.description,
-        'main_image': product.images[0].url if product.images else None,
-        'stock_level': product.stock_level,
-        'detail_url': url_for('products.detail', id=product.id)
-    })
+    try:
+        product = Product.query.get_or_404(id)
+        return jsonify({
+            'id': product.id,
+            'title': product.title,
+            'price': float(product.price),
+            'description': product.description,
+            'main_image': product.images[0].url if product.images else None,
+            'stock_level': product.stock_level,
+            'detail_url': url_for('products.detail', id=product.id)
+        })
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500

@@ -54,10 +54,16 @@ def create_app():
     from app.routes.auth import auth
     from app.routes.admin import admin
     from app.routes.products import products
+    from app.routes.cart import cart
+    from app.routes.checkout import checkout
+    from app.routes.wishlist import wishlist
     
     app.register_blueprint(auth, url_prefix='/auth')
-    app.register_blueprint(admin)
+    app.register_blueprint(admin, url_prefix=str('/admin'))
     app.register_blueprint(products, url_prefix='/products')
+    app.register_blueprint(cart, url_prefix='/cart')
+    app.register_blueprint(checkout, url_prefix='/checkout')
+    app.register_blueprint(wishlist, url_prefix='/wishlist')
     
     # Ensure the upload folder exists
     if not os.path.exists(app.config['UPLOAD_FOLDER']):

@@ -69,8 +69,9 @@
                         <button class="btn btn-primary" onclick="addToCart({{ product.id }})">
                             <i class="fas fa-shopping-cart me-2"></i>Add to Cart
                         </button>
-                        <button class="btn btn-outline-danger" onclick="toggleWishlist({{ product.id }})">
-                            <i class="fas fa-heart"></i>
+                        <button class="btn btn-outline-danger wishlist-btn {% if product in current_user.wishlist_items %}active{% endif %}"
+                                onclick="toggleWishlist({{ product.id }})">
+                            <i class="{% if product in current_user.wishlist_items %}fas{% else %}far{% endif %} fa-heart"></i>
                         </button>
                     </div>
                 </div>
@@ -142,15 +143,62 @@ function updateMainImage(src) {
     });
 }
 
+// Add product to cart
 function addToCart(productId) {
-    const quantity = document.getElementById('quantity').value;
-    // We'll implement this function when we add cart functionality
-    alert('Cart functionality coming soon!');
+    const quantity = parseInt(document.getElementById('quantity').value);
+    
+    fetch(`/cart/add/${productId}`, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/x-www-form-urlencoded',
+            'X-Requested-With': 'XMLHttpRequest'
+        },
+        body: `quantity=${quantity}`
+    })
+    .then(response => response.json())
+    .then(data => {
+        // Update cart count in header
+        const cartCount = document.querySelector('.cart-count');
+        if (cartCount) {
+            cartCount.textContent = data.cart_total;
+        }
+        
+        // Show success message
+        Toast.show('Product added to cart', 'success');
+    })
+    .catch(error => {
+        Toast.show('Error adding product to cart', 'error');
+    });
 }
 
 function toggleWishlist(productId) {
-    // We'll implement this function when we add wishlist functionality
-    alert('Wishlist functionality coming soon!');
+    fetch(`/wishlist/toggle/${productId}`, {
+        method: 'POST',
+        headers: {
+            'X-Requested-With': 'XMLHttpRequest'
+        }
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            // Update wishlist icon
+            const wishlistBtn = document.querySelector('.wishlist-btn');
+            if (data.is_in_wishlist) {
+                wishlistBtn.classList.add('active');
+                wishlistBtn.querySelector('i').classList.remove('far');
+                wishlistBtn.querySelector('i').classList.add('fas');
+            } else {
+                wishlistBtn.classList.remove('active');
+                wishlistBtn.querySelector('i').classList.remove('fas');
+                wishlistBtn.querySelector('i').classList.add('far');
+            }
+            
+            Toast.show(data.message, 'success');
+        }
+    })
+    .catch(error => {
+        Toast.show('Error updating wishlist', 'error');
+    });
 }
 </script>
 

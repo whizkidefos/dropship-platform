@@ -1,21 +1,36 @@
 from app import db
 from datetime import datetime
 
+def generate_order_number():
+    """Generate unique order number"""
+    timestamp = datetime.utcnow().strftime('%Y%m%d%H%M')
+    return f'ORD-{timestamp}-{uuid.uuid4().hex[:8].upper()}'
+
 class Order(db.Model):
     id = db.Column(db.Integer, primary_key=True)
-    order_number = db.Column(db.String(50), unique=True, nullable=False)
+    order_number = db.Column(db.String(50), unique=True, nullable=False, default=generate_order_number)
     user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
-    status = db.Column(db.String(20), nullable=False, default='pending')  # pending, paid, processing, shipped, delivered, cancelled
+    status = db.Column(db.String(20), default='pending')  # pending, paid, processing, shipped, delivered, cancelled
     total_amount = db.Column(db.Float, nullable=False)
-    shipping_address = db.Column(db.JSON, nullable=False)
-    tracking_number = db.Column(db.String(100))
     notes = db.Column(db.Text)
+    
+    # Shipping Information
+    shipping_address = db.Column(db.JSON, nullable=False)
+    shipping_method = db.Column(db.String(50))
+    tracking_number = db.Column(db.String(100))
+    
+    # Payment Information
+    payment_status = db.Column(db.String(20), default='pending')
+    payment_id = db.Column(db.String(100))
+    payment_method = db.Column(db.String(50))
+    
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
     updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
     
     # Relationships
     user = db.relationship('User', backref='orders')
     items = db.relationship('OrderItem', backref='order', lazy=True)
+    
 
     def generate_order_number(self):
         """Generate unique order number"""

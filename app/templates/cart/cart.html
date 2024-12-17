@@ -1,0 +1,219 @@
+{% extends "base.html" %}
+
+{% block title %}Shopping Cart{% endblock %}
+
+{% block content %}
+<div class="container py-5">
+    <h1 class="mb-4">Shopping Cart</h1>
+    
+    {% if cart|length > 0 %}
+    <div class="row">
+        <!-- Cart Items -->
+        <div class="col-lg-8">
+            <div class="card shadow-sm mb-4">
+                <div class="card-body">
+                    {% for item in cart %}
+                    <div class="cart-item mb-3 pb-3 border-bottom" data-product-id="{{ item.id }}">
+                        <div class="row align-items-center">
+                            <!-- Product Image -->
+                            <div class="col-md-2">
+                                <img src="{{ item.image or url_for('static', filename='img/no-image.png') }}" 
+                                     alt="{{ item.title }}" class="img-fluid rounded">
+                            </div>
+                            
+                            <!-- Product Details -->
+                            <div class="col-md-4">
+                                <h5 class="mb-1">{{ item.title }}</h5>
+                                <p class="text-primary mb-0">${{ "%.2f"|format(item.price) }}</p>
+                            </div>
+                            
+                            <!-- Quantity -->
+                            <div class="col-md-3">
+                                <div class="input-group">
+                                    <button class="btn btn-outline-secondary quantity-decrease" type="button">-</button>
+                                    <input type="number" class="form-control text-center quantity-input" 
+                                           value="{{ item.quantity }}" min="1" 
+                                           data-product-id="{{ item.id }}">
+                                    <button class="btn btn-outline-secondary quantity-increase" type="button">+</button>
+                                </div>
+                            </div>
+                            
+                            <!-- Subtotal -->
+                            <div class="col-md-2">
+                                <p class="mb-0 fw-bold">${{ "%.2f"|format(item.price * item.quantity) }}</p>
+                            </div>
+                            
+                            <!-- Remove Button -->
+                            <div class="col-md-1">
+                                <button class="btn btn-link text-danger remove-item" 
+                                        data-product-id="{{ item.id }}">
+                                    <i class="fas fa-trash"></i>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                    {% endfor %}
+                    
+                    <!-- Cart Actions -->
+                    <div class="d-flex justify-content-between align-items-center mt-4">
+                        <a href="{{ url_for('products.catalog') }}" class="btn btn-outline-primary">
+                            <i class="fas fa-arrow-left me-2"></i>Continue Shopping
+                        </a>
+                        <button class="btn btn-outline-danger" id="clear-cart">
+                            <i class="fas fa-trash me-2"></i>Clear Cart
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Cart Summary -->
+        <div class="col-lg-4">
+            <div class="card shadow-sm">
+                <div class="card-body">
+                    <h5 class="card-title mb-4">Cart Summary</h5>
+                    
+                    <div class="d-flex justify-content-between mb-2">
+                        <span>Subtotal</span>
+                        <span class="fw-bold">${{ "%.2f"|format(cart.cart.total_amount) }}</span>
+                    </div>
+                    
+                    <div class="d-flex justify-content-between mb-2">
+                        <span>Shipping</span>
+                        <span class="fw-bold">Free</span>
+                    </div>
+                    
+                    <hr>
+                    
+                    <div class="d-flex justify-content-between mb-4">
+                        <span class="h5">Total</span>
+                        <span class="h5">${{ "%.2f"|format(cart.cart.total_amount) }}</span>
+                    </div>
+                    
+                    <button class="btn btn-primary w-100" id="checkout-button">
+                        Proceed to Checkout
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+    {% else %}
+    <div class="text-center py-5">
+        <i class="fas fa-shopping-cart fa-3x text-muted mb-3"></i>
+        <h3>Your cart is empty</h3>
+        <p class="text-muted">Start adding items to your cart!</p>
+        <a href="{{ url_for('products.catalog') }}" class="btn btn-primary mt-3">
+            Browse Products
+        </a>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}
+
+{% block scripts %}
+{{ super() }}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Quantity controls
+    document.querySelectorAll('.quantity-decrease').forEach(btn => {
+        btn.addEventListener('click', function() {
+            const input = this.parentElement.querySelector('.quantity-input');
+            const newValue = parseInt(input.value) - 1;
+            if (newValue >= 1) {
+                input.value = newValue;
+                updateCartItem(input.dataset.productId, newValue);
+            }
+        });
+    });
+
+    document.querySelectorAll('.quantity-increase').forEach(btn => {
+        btn.addEventListener('click', function() {
+            const input = this.parentElement.querySelector('.quantity-input');
+            const newValue = parseInt(input.value) + 1;
+            input.value = newValue;
+            updateCartItem(input.dataset.productId, newValue);
+        });
+    });
+
+    // Remove item
+    document.querySelectorAll('.remove-item').forEach(btn => {
+        btn.addEventListener('click', function() {
+            const productId = this.dataset.productId;
+            removeFromCart(productId);
+        });
+    });
+
+    // Clear cart
+    document.getElementById('clear-cart')?.addEventListener('click', function() {
+        if (confirm('Are you sure you want to clear your cart?')) {
+            clearCart();
+        }
+    });
+
+    // Checkout button
+    document.getElementById('checkout-button')?.addEventListener('click', function() {
+        window.location.href = '{{ url_for("cart.checkout") }}';
+    });
+});
+
+// AJAX functions
+function updateCartItem(productId, quantity) {
+    fetch(`/cart/update/${productId}`, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/x-www-form-urlencoded',
+            'X-Requested-With': 'XMLHttpRequest'
+        },
+        body: `quantity=${quantity}`
+    })
+    .then(response => response.json())
+    .then(data => {
+        updateCartUI(data);
+    });
+}
+
+function removeFromCart(productId) {
+    fetch(`/cart/remove/${productId}`, {
+        method: 'POST',
+        headers: {
+            'X-Requested-With': 'XMLHttpRequest'
+        }
+    })
+    .then(response => response.json())
+    .then(data => {
+        document.querySelector(`.cart-item[data-product-id="${productId}"]`).remove();
+        updateCartUI(data);
+        if (data.cart_total === 0) {
+            location.reload();
+        }
+    });
+}
+
+function clearCart() {
+    fetch('/cart/clear', {
+        method: 'POST',
+        headers: {
+            'X-Requested-With': 'XMLHttpRequest'
+        }
+    })
+    .then(response => response.json())
+    .then(data => {
+        location.reload();
+    });
+}
+
+function updateCartUI(data) {
+    // Update cart count in navbar
+    const cartCount = document.querySelector('.cart-count');
+    if (cartCount) {
+        cartCount.textContent = data.cart_total;
+    }
+    
+    // Update cart total amount
+    const cartAmount = document.querySelector('.cart-amount');
+    if (cartAmount) {
+        cartAmount.textContent = `$${data.cart_amount.toFixed(2)}`;
+    }
+}
+</script>
+{% endblock %}
